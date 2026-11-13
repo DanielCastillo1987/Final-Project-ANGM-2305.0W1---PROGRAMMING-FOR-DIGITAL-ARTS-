@@ -50,7 +50,34 @@ def draw_figures(color=White):
                                 end_pos=(col * Square_size + Square_size // 4,
                                          row * Square_size + 3 * Square_size // 4),
                                 width=Cross_width)
-           
-      
+def mark_square(row, col, player):
+    board[row][col] = player
+
+def avaliable_square(row, col):
+    return board[row][col] == 0
+
+def is_board_full(check_board=board):
+    for row in range(Board_Rows):
+        for col in range(Board_cols):
+            if check_board[row][col] == 0:
+                return True
+            return False
+
+def check_win(player, check_board=board):
+    for col in range(Board_cols):
+        if check_board[0][col] == player and check_board[1][col] == player and check_board[2][col] == player:
+            return True
+
+    for row in range(Board_Rows):
+            if check_board[row][0] == player and check_board[row][1] == player and check_board[row][2] == player:
+                return True
+
+            if check_board[0][0] == player and check_board[1][1] == player and check_board[2][2] == player:
+                return True
+            
+            if check_board[0][2] == player and check_board[1][1] == player and check_board[2][0] == player:
+                            return True
+            return False
+
                 #pygame.draw.line(screen, color (col * Square_size + Square_size // 4, row * Square_size + Square_size // 4,)(col * Square_size + 3 * Square_size // 4, row * Square_size + 3 * Square_size // 4))
                 #pygame.draw.line(screen, color, start_pos=:(col * Square_size + Square_size // 4, row * Square_size + 3 * Square_size // 4)), end_pos:(col * Square_size + Square_size // 4, row * Square_size + 3 * Square_size // 4)
