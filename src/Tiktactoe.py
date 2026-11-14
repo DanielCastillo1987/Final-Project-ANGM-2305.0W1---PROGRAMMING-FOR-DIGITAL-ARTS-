@@ -10,15 +10,23 @@ Red = (255, 0, 0)
 Green = (0, 255, 0)
 Black = (0, 0, 0)
 
-Width = 300
-Height = 300
-Line_Width = 5
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+Width, Height = screen.get_size() 
+pygame.display.set_caption('Tic Tac Toe AI')
+
+
+#Width = 300
+#Height = 300
 Board_Rows = 3
 Board_cols = 3
-Square_size = Width // Board_cols
+Board_Size = min(Width, Height) - 40 
+Square_size = Board_Size // Board_cols
+Board_Offset_X = (Width - Square_size * Board_cols) // 2
+Board_Offset_Y = (Height - Square_size * Board_Rows) // 2
+Line_Width = max(3, Square_size // 40)  
 Circle_radius = Square_size // 3
-Circle_width = 15
-Cross_width = 25
+Circle_width = max(5, Square_size // 15)
+Cross_width = max(5, Square_size // 12) 
 
 screen = pygame.display.set_mode((Width, Height))
 pygame.display.set_caption('Tic Tac Toe AI')
@@ -30,28 +38,34 @@ Max_Depth = 6
 
 def draw_lines(color=White):
     for i in range(1, Board_Rows):
-        pygame.draw.line(screen, color, start_pos=(0, Square_size * i), end_pos=(Width, Square_size * i), width=Line_Width)
-        pygame.draw.line(screen, color, (Square_size * i, 0), (Square_size * i, Height), Line_Width)
+          pygame.draw.line(screen, color,
+                           start_pos=(Board_Offset_X, Board_Offset_Y + Square_size * i),
+                           end_pos=(Board_Offset_X + Square_size * Board_cols, Board_Offset_Y + Square_size * i),
+                           width=Line_Width)
+          pygame.draw.line(screen, color,
+                            start_pos=(Board_Offset_X + Square_size * i, Board_Offset_Y),
+                            end_pos=(Board_Offset_X + Square_size * i, Board_Offset_Y + Square_size * Board_Rows),
+                            width=Line_Width)
 
 def draw_figures(color=White):
     for row in range(Board_Rows):
         for col in range(Board_cols):
             if board[row][col] == 1:
-                center = (int(col * Square_size + Square_size // 2),
-                           int(row * Square_size + Square_size // 2))
+                center = (int(Board_Offset_X + col * Square_size + Square_size // 2),
+                           int(Board_Offset_Y + row * Square_size + Square_size // 2))
                 pygame.draw.circle(screen, color, center, Circle_radius, Circle_width)                                      
             elif board[row][col] == 2:
                 pygame.draw.line(screen, color,
-                                start_pos=(col * Square_size + Square_size // 4,
-                                             row * Square_size + Square_size // 4),
-                                end_pos=(col * Square_size + 3 * Square_size // 4,
-                                         row * Square_size + 3 * Square_size // 4),
+                                start_pos=(Board_Offset_X + col * Square_size + Square_size // 4,
+                                             Board_Offset_Y + row * Square_size + Square_size // 4),
+                                end_pos=(Board_Offset_X + col * Square_size + 3 * Square_size // 4,
+                                         Board_Offset_Y + row * Square_size + 3 * Square_size // 4),
                                 width=Cross_width)
                 pygame.draw.line(screen, color,
-                                start_pos=(col * Square_size + 3 * Square_size // 4,
-                                            row * Square_size + Square_size // 4),
-                                end_pos=(col * Square_size + Square_size // 4,
-                                         row * Square_size + 3 * Square_size // 4),
+                                start_pos=(Board_Offset_X + col * Square_size + 3 * Square_size // 4,
+                                            Board_Offset_Y + row * Square_size + Square_size // 4),
+                                end_pos=(Board_Offset_X + col * Square_size + Square_size // 4,
+                                         Board_Offset_Y + row * Square_size + 3 * Square_size // 4),
                                 width=Cross_width)
 def mark_square(row, col, player):
     board[row][col] = player
@@ -169,27 +183,33 @@ while True:
           if event.type == pygame.QUIT:
                sys.exit()
 
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+               sys.exit()
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                pygame.display.toggle_fullscreen()
+
           if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
-               mouseX = event.pos[0] // Square_size
-               mouseY = event.pos[1] // Square_size
+               mouseX = (event.pos[0] - Board_Offset_X) // Square_size
+               mouseY = (event.pos[1] - Board_Offset_Y) // Square_size
 
-               if avaliable_square(mouseY, mouseX):
-                    board[mouseY][mouseX] = player
-                    if check_win(player):
-                       game_over = True
-                       Move_history.append((mouseY, mouseX))
 
-                    else:
-                         board[mouseY][mouseX] = 0
-                         place_piece(mouseY, mouseX, player) 
-                         
-                         player = player % 2 + 1
-                         if not game_over:
-                              if best_move():
-                                   if check_win(2):
-                                        game_over = True
-                                   else:
-                                        player = 1
+               if 0 <= mouseX < Board_cols and 0 <= mouseY < Board_Rows:
+                    if avaliable_square(mouseY, mouseX):
+                         board[mouseY][mouseX] = player
+                         if check_win(player):
+                              game_over = True
+                              Move_history.append((mouseY, mouseX))
+
+                         else:
+                            board[mouseY][mouseX] = 0
+                            place_piece(mouseY, mouseX, player) 
+                            player = player % 2 + 1
+                            if not game_over:
+                                 if best_move():
+                                      if check_win(2):
+                                           game_over = True
+                                      else:
+                                           player = 1
 
                     if not game_over:
                          if is_board_full():
