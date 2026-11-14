@@ -24,6 +24,9 @@ screen = pygame.display.set_mode((Width, Height))
 pygame.display.set_caption('Tic Tac Toe AI')
 
 board = np.zeros((Board_Rows, Board_cols))
+Move_history = []
+Max_Pieces = 6
+Max_Depth = 6
 
 def draw_lines(color=White):
     for i in range(1, Board_Rows):
@@ -53,6 +56,13 @@ def draw_figures(color=White):
 def mark_square(row, col, player):
     board[row][col] = player
 
+def place_piece(row, col, player):
+     mark_square(row, col, player)
+     Move_history.append((row, col))
+     if len(Move_history) > Max_Pieces:
+        old_row, old_col = Move_history.pop(0)
+        board[old_row][old_col] = 0
+
 def avaliable_square(row, col):
     return board[row][col] == 0
 
@@ -79,12 +89,13 @@ def check_win(player, check_board=board):
             return True
     return False
 
-def minimax(minimax_board, depth, is_maximizing):
+def minimax(minimax_board, depth, is_maximizing, history):
      if check_win(2, minimax_board):
           return float('inf')
      elif check_win(1, minimax_board):
           return float('-inf')
-     elif is_board_full(minimax_board):
+
+     if depth >= Max_Depth:
           return 0
 
      if is_maximizing:
@@ -92,9 +103,13 @@ def minimax(minimax_board, depth, is_maximizing):
           for row in range(Board_Rows):
                for col in range(Board_cols):
                     if minimax_board[row][col] == 0:
-                         minimax_board[row][col] = 2
-                         score = minimax(minimax_board, depth + 1, False)
-                         minimax_board[row][col] = 0
+                         new_board = minimax_board.copy()
+                         new_board[row][col] = 2
+                         new_history = history + [(row, col)]
+                         if len(new_history) > Max_Pieces:
+                              old_r, old_c = new_history.pop(0)
+                              new_board[old_r][old_c] = 0
+                         score = minimax(new_board, depth + 1, False, new_history)
                          best_score = max(score, best_score)
           return best_score
      else:
@@ -102,9 +117,13 @@ def minimax(minimax_board, depth, is_maximizing):
           for row in range(Board_Rows):
                for col in range(Board_cols):
                     if minimax_board[row][col] == 0:
-                         minimax_board[row][col] = 1
-                         score = minimax(minimax_board, depth + 1, True)
-                         minimax_board[row][col] = 0
+                         new_board = minimax_board.copy()
+                         new_board[row][col] = 1
+                         new_history = history + [(row, col)]
+                         if len(new_history) > Max_Pieces:
+                              old_r, old_c = new_history.pop(0)
+                              new_board[old_r][old_c] = 0 
+                         score = minimax(new_board, depth + 1, True, new_history)
                          best_score = min(score, best_score)
           return best_score
 
@@ -114,31 +133,38 @@ def best_move():
      for row in range(Board_Rows):
         for col in range(Board_cols):
              if board[row][col] == 0:
-                  board[row][col] = 2
-                  score = minimax(board, 0, False)
-                  board[row][col] = 0
+                  new_board = board.copy() 
+                  new_board[row][col] = 2
+                  new_history = Move_history + [(row, col)]
+                  if len(new_history) > Max_Pieces:
+                       old_r, old_c = new_history.pop(0)
+                       new_board[old_r][old_c] = 0  
+                  score = minimax(new_board, 0, False, new_history)
                   if score > best_score:
                        best_score = score
                        move = (row, col)
 
-     if move != (-1,-1):
-            mark_square(move[0], move[1], 2)
+     if move != (-1, -1):
+            place_piece(move[0], move[1], 2)
             return True
      return False  
                             
 
 def restart_game():
+     global Move_history
      screen.fill(Black)
      draw_lines()
      for row in range(Board_Rows):
           for col in range(Board_cols):
                board[row][col] = 0
+     Move_history = []
 
 draw_lines()
 player = 1
 game_over = False
 
 while True:
+     screen.fill(Black)
      for event in pygame.event.get():
           if event.type == pygame.QUIT:
                sys.exit()
@@ -148,17 +174,22 @@ while True:
                mouseY = event.pos[1] // Square_size
 
                if avaliable_square(mouseY, mouseX):
-                    mark_square(mouseY, mouseX, player)
+                    board[mouseY][mouseX] = player
                     if check_win(player):
-                         game_over = True
-                    player = player % 2 + 1
+                       game_over = True
+                       Move_history.append((mouseY, mouseX))
 
-                    if not game_over:
-                         if best_move():
-                              if check_win(2):
-                                   game_over = True
-                              else:
-                                   player = 1
+                    else:
+                         board[mouseY][mouseX] = 0
+                         place_piece(mouseY, mouseX, player) 
+                         
+                         player = player % 2 + 1
+                         if not game_over:
+                              if best_move():
+                                   if check_win(2):
+                                        game_over = True
+                                   else:
+                                        player = 1
 
                     if not game_over:
                          if is_board_full():
@@ -168,6 +199,7 @@ while True:
             game_over = False
             player = 1
      if not game_over:
+          draw_lines()
           draw_figures()
      else:
           if check_win(1):
