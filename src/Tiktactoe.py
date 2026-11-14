@@ -157,4 +157,26 @@ while True:
                               if check_win(2):
                                    game_over = True
                               player = player % 2 + 1
-               
+                    if not game_over:
+                         if is_board_full():
+                              game_over = True
+          if event.key == pygame. KEYDOWN:
+               if event.key == pygame.K_r:
+                    restart_game()
+                    game_over = False
+                    player = 1
+     if not game_over:
+          draw_figures()
+     else:
+          if check_win(1):
+               draw_figures(Green)
+               draw_lines(Green)
+
+          elif check_win(2):
+            draw_figures(Red)
+            draw_lines(Red)
+          else: 
+            draw_figures(Gray)
+            draw_lines(Gray)
+     
+     pygame.display.update()
