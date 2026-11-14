@@ -60,8 +60,8 @@ def is_board_full(check_board=board):
     for row in range(Board_Rows):
         for col in range(Board_cols):
             if check_board[row][col] == 0:
-                return True
-            return False
+                return False
+    return True
 
 def check_win(player, check_board=board):
     for col in range(Board_cols):
@@ -69,15 +69,15 @@ def check_win(player, check_board=board):
             return True
 
     for row in range(Board_Rows):
-            if check_board[row][0] == player and check_board[row][1] == player and check_board[row][2] == player:
+        if check_board[row][0] == player and check_board[row][1] == player and check_board[row][2] == player:
                 return True
 
-            if check_board[0][0] == player and check_board[1][1] == player and check_board[2][2] == player:
+    if check_board[0][0] == player and check_board[1][1] == player and check_board[2][2] == player:
                 return True
             
-            if check_board[0][2] == player and check_board[1][1] == player and check_board[2][0] == player:
-                            return True
-            return False
+    if check_board[0][2] == player and check_board[1][1] == player and check_board[2][0] == player:
+            return True
+    return False
 
 def minimax(minimax_board, depth, is_maximizing):
      if check_win(2, minimax_board):
@@ -96,7 +96,7 @@ def minimax(minimax_board, depth, is_maximizing):
                          score = minimax(minimax_board, depth + 1, False)
                          minimax_board[row][col] = 0
                          best_score = max(score, best_score)
-                         return best_score
+          return best_score
      else:
           best_score = 1000
           for row in range(Board_Rows):
@@ -106,7 +106,7 @@ def minimax(minimax_board, depth, is_maximizing):
                          score = minimax(minimax_board, depth + 1, True)
                          minimax_board[row][col] = 0
                          best_score = min(score, best_score)
-                         return best_score
+          return best_score
 
 def best_move():
      best_score = -1000
@@ -120,10 +120,11 @@ def best_move():
                   if score > best_score:
                        best_score = score
                        move = (row, col)
-                       if move != (-1 -1):
-                             mark_square(move[0], move[1], 2)
-                             return True
-                       return False  
+
+     if move != (-1,-1):
+            mark_square(move[0], move[1], 2)
+            return True
+     return False  
                             
 
 def restart_game():
@@ -156,15 +157,16 @@ while True:
                          if best_move():
                               if check_win(2):
                                    game_over = True
-                              player = player % 2 + 1
+                              else:
+                                   player = 1
+
                     if not game_over:
                          if is_board_full():
                               game_over = True
-          if event.key == pygame. KEYDOWN:
-               if event.key == pygame.K_r:
-                    restart_game()
-                    game_over = False
-                    player = 1
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            restart_game()
+            game_over = False
+            player = 1
      if not game_over:
           draw_figures()
      else:
