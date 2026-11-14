@@ -36,6 +36,10 @@ Move_history = []
 Max_Pieces = 6
 Max_Depth = 6
 
+Wins_To_Take_Series = 3 
+series_wins = {1: 0, 2: 0} 
+series_over = False
+
 def draw_lines(color=White):
     for i in range(1, Board_Rows):
           pygame.draw.line(screen, color,
@@ -173,6 +177,39 @@ def restart_game():
                board[row][col] = 0
      Move_history = []
 
+def next_round():
+      global Move_history, player, game_over
+      for row in range(Board_Rows):
+           for col in range(Board_cols):
+                board[row][col] = 0
+      Move_history = []
+      player = 1
+      game_over = False
+
+def restart_series():
+     global series_wins, series_over
+     series_wins = {1: 0, 2: 0}
+     series_over = False
+     next_round()
+
+def draw_scores():
+      font = pygame.font.SysFont(None, max(28, Square_size // 3))
+      text = f"YOU (O): {series_wins[1]}    AI (X): {series_wins[2]}    First to {Wins_To_Take_Series}"
+      surface = font.render(text, True, White)
+      rect = surface.get_rect(center=(Width // 2, Board_Offset_Y // 2))
+      screen.blit(surface, rect)
+
+      if series_over:
+           if series_wins[1] >= Wins_To_Take_Series:
+                msg = "You won the set!  Press R to play again"
+           else:
+                msg = "You lost the set!  Press R to play again" 
+           font2 = pygame.font.SysFont(None, max(32, Square_size // 2))
+           surface2 = font2.render(msg, True, White)
+           rect2 = surface2.get_rect(center=(Width // 2, Height - Board_Offset_Y // 2))
+           screen.blit(surface2, rect2)
+
+
 draw_lines()
 player = 1
 game_over = False
@@ -199,6 +236,9 @@ while True:
                          if check_win(player):
                               game_over = True
                               Move_history.append((mouseY, mouseX))
+                              series_wins[1] += 1
+                              if series_wins[1] >= Wins_To_Take_Series:
+                                   series_over = True  
 
                          else:
                             board[mouseY][mouseX] = 0
@@ -208,16 +248,24 @@ while True:
                                  if best_move():
                                       if check_win(2):
                                            game_over = True
+                                           series_wins[2] += 1
+                                           if series_wins[2] >= Wins_To_Take_Series:
+                                                series_over = True 
                                       else:
                                            player = 1
 
                     if not game_over:
                          if is_board_full():
                               game_over = True
+
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                if game_over and not series_over:
+                     next_round()
+
           if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-            restart_game()
-            game_over = False
-            player = 1
+            restart_series()
+            #game_over = False
+            #player = 1
      if not game_over:
           draw_lines()
           draw_figures()
@@ -232,5 +280,6 @@ while True:
           else: 
             draw_figures(Gray)
             draw_lines(Gray)
-     
+
+     draw_scores()
      pygame.display.update()
