@@ -39,6 +39,7 @@ Max_Depth = 6
 Wins_To_Take_Series = 3 
 series_wins = {1: 0, 2: 0} 
 series_over = False
+next_starter = 1    
 
 def draw_lines(color=White):
     for i in range(1, Board_Rows):
@@ -178,18 +179,20 @@ def restart_game():
      Move_history = []
 
 def next_round():
-      global Move_history, player, game_over
+      global Move_history, player, game_over, next_starter
       for row in range(Board_Rows):
            for col in range(Board_cols):
                 board[row][col] = 0
       Move_history = []
-      player = 1
+      player = next_starter
+      #player = 1
       game_over = False
 
 def restart_series():
-     global series_wins, series_over
+     global series_wins, series_over, next_starter
      series_wins = {1: 0, 2: 0}
      series_over = False
+     next_starter = 1 
      next_round()
 
 def draw_scores():
@@ -211,7 +214,7 @@ def draw_scores():
 
 
 draw_lines()
-player = 1
+player = next_starter
 game_over = False
 
 while True:
@@ -225,7 +228,7 @@ while True:
           if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
 
-          if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+          if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 1:
                mouseX = (event.pos[0] - Board_Offset_X) // Square_size
                mouseY = (event.pos[1] - Board_Offset_Y) // Square_size
 
@@ -237,6 +240,7 @@ while True:
                               game_over = True
                               Move_history.append((mouseY, mouseX))
                               series_wins[1] += 1
+                              next_starter = 2
                               if series_wins[1] >= Wins_To_Take_Series:
                                    series_over = True  
 
@@ -249,14 +253,12 @@ while True:
                                       if check_win(2):
                                            game_over = True
                                            series_wins[2] += 1
+                                           next_starter = 1 
                                            if series_wins[2] >= Wins_To_Take_Series:
                                                 series_over = True 
                                       else:
                                            player = 1
 
-                    if not game_over:
-                         if is_board_full():
-                              game_over = True
 
           if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if game_over and not series_over:
@@ -264,6 +266,16 @@ while True:
 
           if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             restart_series()
+     if not game_over and not series_over and player == 2:
+          if best_move():
+                if check_win(2):
+                     game_over = True
+                     series_wins[2] += 1
+                     next_starter = 1
+                     if series_wins[2] >= Wins_To_Take_Series:
+                          series_over = True
+                else:
+                     player = 1
             #game_over = False
             #player = 1
      if not game_over:
