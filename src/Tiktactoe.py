@@ -1,6 +1,7 @@
 import sys
 import pygame
 import numpy as np
+import random   
 
 pygame.init()
 
@@ -40,6 +41,11 @@ Wins_To_Take_Series = 3
 series_wins = {1: 0, 2: 0} 
 series_over = False
 next_starter = 1    
+
+state = "menu" 
+player_class = 1
+ai_class = 1
+CLASS_NAMES = {1: "Knight", 2: "Thief", 3: "Wizard", 4: "John Tiktactoe"}
 
 def draw_lines(color=White):
     for i in range(1, Board_Rows):
@@ -198,6 +204,7 @@ def restart_series():
 def draw_scores():
       #font = pygame.font.SysFont(None, max(28, Square_size // 3))
       text = f"YOU (O): {series_wins[1]}    AI (X): {series_wins[2]}    First to {Wins_To_Take_Series}"
+      text += f"    YOU: {CLASS_NAMES[player_class]}  vs  AI: {CLASS_NAMES[ai_class]}"
       font_size = max(28, Square_size // 3)
       font = pygame.font.SysFont(None, font_size) 
       surface = font.render(text, True, White)
@@ -228,6 +235,39 @@ def draw_scores():
            rect2 = surface2.get_rect(center=(Width // 2, Height - Board_Offset_Y // 2 - 60))
            screen.blit(surface2, rect2)
 
+def draw_menu():
+      title_size = max(48, Square_size // 2)
+      font = pygame.font.SysFont(None, title_size)
+      title = font.render("TIC TAC TOE", True, White)
+      screen.blit(title, title.get_rect(center=(Width // 2, Height // 2 - Square_size // 2)))
+      prompt_size = max(28, Square_size // 4)
+      font2 = pygame.font.SysFont(None, prompt_size)
+      prompt = font2.render("Press SPACE to choose a class", True, White)
+      screen.blit(prompt, prompt.get_rect(center=(Width // 2, Height // 2 + Square_size // 2)))
+
+
+
+
+def draw_class_select():
+     title_size = max(40, Square_size // 3)
+     font = pygame.font.SysFont(None, title_size)
+     title = font.render("CHOOSE YOUR CLASS", True, White)
+     screen.blit(title, title.get_rect(center=(Width // 2, Height // 2 - Square_size)))
+
+     option_size = max(28, Square_size // 5)
+     font2 = pygame.font.SysFont(None, option_size)
+     labels = ["1. Knight", "2. Theif", "3. Wizard", "4. John Tiktactoe",]
+
+     start_y = Height // 2
+     for i, label in enumerate(labels):
+          color = Green if (i + 1) == player_class else White
+          surface = font2.render(label, True, color)
+          screen.blit(surface, surface.get_rect(center=(Width // 2, start_y + i * (option_size + 16))))
+     hint = font2.render("Press 1-4 to choose, ENTER to confirm", True, Gray)
+     screen.blit(hint, hint.get_rect(center=(Width // 2, Height - option_size * 2)))
+
+
+
 
 draw_lines()
 player = next_starter
@@ -244,7 +284,23 @@ while True:
           if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
 
-          if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 1:
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                if state == "menu":
+                     state = "class_select"
+                elif state == "playing" and game_over and not series_over:
+                     next_round()
+
+          if event.type == pygame.KEYDOWN and state == "class_select":
+               if event.key in (pygame.K_1, pygame.K_KP1): player_class = 1
+               if event.key in (pygame.K_2, pygame.K_KP2): player_class = 2
+               if event.key in (pygame.K_3, pygame.K_KP3): player_class = 3
+               if event.key in (pygame.K_4, pygame.K_KP4): player_class = 4
+               if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    ai_class = random.randint(1, 4)
+                    restart_series()
+                    state = "playing"
+
+          if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 1 and state == "playing":
                mouseX = (event.pos[0] - Board_Offset_X) // Square_size
                mouseY = (event.pos[1] - Board_Offset_Y) // Square_size
 
@@ -282,7 +338,8 @@ while True:
 
           if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             restart_series()
-     if not game_over and not series_over and player == 2:
+     if state == "playing" and not game_over and not series_over and player == 2:
+
           if best_move():
                 if check_win(2):
                      game_over = True
@@ -292,22 +349,26 @@ while True:
                           series_over = True
                 else:
                      player = 1
-            #game_over = False
-            #player = 1
-     if not game_over:
-          draw_lines()
-          draw_figures()
+     if state == "menu":
+          draw_menu()
+     elif state == "class_select":
+          draw_class_select()
      else:
-          if check_win(1):
-               draw_figures(Green)
-               draw_lines(Green)
 
-          elif check_win(2):
-            draw_figures(Red)
-            draw_lines(Red)
-          else: 
-            draw_figures(Gray)
-            draw_lines(Gray)
+          if not game_over:
+               draw_lines()
+               draw_figures()
+          else:
+               if check_win(1):
+                    draw_figures(Green)
+                    draw_lines(Green)
+
+               elif check_win(2):
+                    draw_figures(Red)
+                    draw_lines(Red)
+               else: 
+                    draw_figures(Gray)
+               draw_lines(Gray)
 
      draw_scores()
      pygame.display.update()
