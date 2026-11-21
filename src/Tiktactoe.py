@@ -196,10 +196,18 @@ def restart_series():
      next_round()
 
 def draw_scores():
-      font = pygame.font.SysFont(None, max(28, Square_size // 3))
+      #font = pygame.font.SysFont(None, max(28, Square_size // 3))
       text = f"YOU (O): {series_wins[1]}    AI (X): {series_wins[2]}    First to {Wins_To_Take_Series}"
+      font_size = max(28, Square_size // 3)
+      font = pygame.font.SysFont(None, font_size) 
       surface = font.render(text, True, White)
-      rect = surface.get_rect(center=(Width // 2, Board_Offset_Y // 2))
+
+      while surface.get_width() > Width * 0.9 and font_size > 16:
+            font_size -= 2 
+            font = pygame.font.SysFont(None, font_size)
+            surface = font.render(text, True, White)
+
+      rect = surface.get_rect(center=(Width // 2, Board_Offset_Y // 2 + 70))
       screen.blit(surface, rect)
 
       if series_over:
@@ -207,9 +215,17 @@ def draw_scores():
                 msg = "You won the set!  Press R to play again"
            else:
                 msg = "You lost the set!  Press R to play again" 
-           font2 = pygame.font.SysFont(None, max(32, Square_size // 2))
+
+           font_size2 = max(32, Square_size // 2)
+
+           font2 = pygame.font.SysFont(None, font_size2)
            surface2 = font2.render(msg, True, White)
-           rect2 = surface2.get_rect(center=(Width // 2, Height - Board_Offset_Y // 2))
+           while surface2.get_width() > Width * 0.9 and font_size2 > 16:
+                font_size2 -= 2
+                font2 = pygame.font.SysFont(None, font_size2)
+                surface2 = font2.render(msg, True, White)
+           
+           rect2 = surface2.get_rect(center=(Width // 2, Height - Board_Offset_Y // 2 - 60))
            screen.blit(surface2, rect2)
 
 
