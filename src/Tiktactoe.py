@@ -10,6 +10,8 @@ Gray = (180, 180, 180)
 Red = (255, 0, 0)
 Green = (0, 255, 0)
 Black = (0, 0, 0)
+Yellow = (255, 255, 0)
+Blue = (0, 120, 255)  
 
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 Width, Height = screen.get_size() 
@@ -46,6 +48,24 @@ state = "menu"
 player_class = 1
 ai_class = 1
 CLASS_NAMES = {1: "Knight", 2: "Thief", 3: "Wizard", 4: "John Tiktactoe"}
+CLASS_DESCRIPTIONS = {1: "Knight: You can protect a move meant to disappear for one turn.'Your Stars Were Bad'", 
+                      2: "Thief: Swaps one of your tiles with your opponent. 'Take Your Heart.'",
+                      3: "Wizard: Makes a tile unplayable for the turn. 'We Love Casting Spells.'",
+                      4: "John Tiktactoe: No power just skill. 'Gimme A Cheese With Nothing.'", 
+}
+
+player_ability_used = False
+ai_ability_used = False
+player_turns = 0
+ai_turns = 0
+protected_cell = None
+blocked_cell = None
+ability_target = None
+thief_own_cell = None
+ability_message = ""
+ability_message_timer = 0
+
+
 
 def draw_lines(color=White):
     for i in range(1, Board_Rows):
@@ -78,6 +98,18 @@ def draw_figures(color=White):
                                 end_pos=(Board_Offset_X + col * Square_size + Square_size // 4,
                                          Board_Offset_Y + row * Square_size + 3 * Square_size // 4),
                                 width=Cross_width)
+
+def draw_ability_highlights():   
+     if protected_cell is not None:
+          r, c = protected_cell
+          pygame.draw.rect(screen, Blue,(Board_Offset_X + c * Square_size + 3,Board_Offset_Y + r * Square_size + 3, Square_size - 6, Square_size - 6), 4)
+     if blocked_cell is not None:
+           r, c = blocked_cell
+           pygame.draw.rect(screen, Yellow,
+                           (Board_Offset_X + c * Square_size + 3,
+                            Board_Offset_Y + r * Square_size + 3,
+                            Square_size - 6, Square_size - 6), 4)
+                
 def mark_square(row, col, player):
     board[row][col] = player
 
@@ -86,9 +118,15 @@ def place_piece(row, col, player):
      Move_history.append((row, col))
      if len(Move_history) > Max_Pieces:
         old_row, old_col = Move_history.pop(0)
-        board[old_row][old_col] = 0
+        if protected_cell == (old_row, old_col):
+              protected_cell = None
+              Move_history.insert(0, (old_row, old_col))
+        else:
+           board[old_row][old_col] = 0
 
 def avaliable_square(row, col):
+    if (row, col) == blocked_cell:
+         return False
     return board[row][col] == 0
 
 def is_board_full(check_board=board):
@@ -157,6 +195,7 @@ def best_move():
      move = (-1, -1)
      for row in range(Board_Rows):
         for col in range(Board_cols):
+            if avaliable_square(row, col):  
              if board[row][col] == 0:
                   new_board = board.copy() 
                   new_board[row][col] = 2
@@ -173,7 +212,49 @@ def best_move():
             place_piece(move[0], move[1], 2)
             return True
      return False  
-                            
+
+def set_ability_message(msg):
+     global ability_message, ability_message_timer
+     ability_message = msg
+     ability_message_timer = 120
+
+def human_ability_ready():
+     return (not player_ability_used) and (player_turns >= 2) and player_class != 4
+
+def ai_ability_ready():
+     return (not ai_ability_used) and (ai_turns >= 2) and ai_class != 4
+
+def clear_expired_blocks():
+     pass
+
+def apply_ai_ability():
+     global ai_ability_used, protected_cell, blocked_cell
+     if not ai_ability_ready():
+          return
+     if ai_class == 1:
+          ai_ability_used = True
+          for cell in Move_history:
+               if board[cell[0]][cell[1]] == 2:
+                    protected_cell = cell
+                    set_ability_message("AI Knight protected a piece!")
+                    return
+          protected_cell = None
+     elif ai_class == 2:
+          ai_ability_used = True
+          ai_cells = [(r, c) for r in range(Board_Rows) for c in range(Board_cols) if board[r][c] == 2]
+          human_cells = [(r, c) for r in range(Board_Rows) for c in range(Board_cols) if board[r][c] == 1]
+          if ai_cells and human_cells:
+               a = random.choice(ai_cells)
+               h = random.choice(human_cells)
+               board[a[0]][a[1]] = 1
+               board[h[0]][h[1]] = 2
+               set_ability_message("AI Thief swapped a tile!")
+     elif ai_class == 3:
+          ai_ability_used = True
+          empties = [(r, c) for r in range(Board_Rows) for c in range(Board_cols) if board[r][c] == 0]
+          if empties:
+               blocked_cell = random.choice(empties)
+               set_ability_message("AI Wizard blocked a tile!")
 
 def restart_game():
      global Move_history
@@ -183,6 +264,18 @@ def restart_game():
           for col in range(Board_cols):
                board[row][col] = 0
      Move_history = []
+     player = next_starter
+     game_over = False
+     player_ability_used = False
+     ai_ability_used = False
+     player_turns = 0
+     ai_turns = 0
+     protected_cell = None
+     blocked_cell = None
+     ability_target = None
+     thief_own_cell = None
+
+
 
 def next_round():
       global Move_history, player, game_over, next_starter
@@ -266,7 +359,47 @@ def draw_class_select():
      hint = font2.render("Press 1-4 to choose, ENTER to confirm", True, Gray)
      screen.blit(hint, hint.get_rect(center=(Width // 2, Height - option_size * 2)))
 
+     desc_size = max(24, Square_size // 6) 
+     font3 = pygame.font.SysFont(None, desc_size)
+     desc = CLASS_DESCRIPTIONS[player_class]
+     desc_surface = font3.render(desc, True, Gray)
+     while desc_surface.get_width() > Width * 0.9 and desc_size > 14:
+          desc_size -= 2
+          font3 = pygame.font.SysFont(None, desc_size)
+          desc_surface = font3.render(desc, True, Gray)
+     screen.blit(desc_surface, desc_surface.get_rect(center=(Width // 2, Height - desc_size * 3.5 - 10))) 
 
+
+def draw_ability_hud():
+     font_size = max(22, Square_size // 7)
+     font = pygame.font.SysFont(None, font_size)
+     if ability_message:
+          color = Yellow
+          text = ability_message
+     elif player_class == 4:
+          text = "No ability — just skill."
+          color = Gray
+     elif player_ability_used:
+          text = "Ability used."
+          color = Gray
+     elif player_turns >= 2 and player == 1 and state == "playing":
+          text = "Press E to use your ability."
+          color = Green
+     elif ability_target in ("thief_own", "thief_target"):
+          text = "Click your own tile to swap."
+          color = Yellow
+     elif ability_target == "wizard":
+          text = "Click an empty tile to block."
+          color = Yellow
+     elif ability_target == "knight":
+          text = "Click one of your tiles to protect."
+          color = Yellow
+     else:
+          text = ""
+          color = Gray
+     if text:
+          surf = font.render(text, True, color)
+          screen.blit(surf, surf.get_rect(center=(Width // 2, Height - Square_size // 2 - 40)))
 
 
 draw_lines()
@@ -300,9 +433,50 @@ while True:
                     restart_series()
                     state = "playing"
 
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+               if state == "playing" and not game_over and player == 1 and human_ability_ready():
+                    if player_class == 1:
+                         ability_target = "knight"
+                         set_ability_message("Knight: choose a tile to protect.")
+                    elif player_class == 2:
+                         ability_target = "thief_own"
+                         set_ability_message("Thief: choose your own tile.")
+                    elif player_class == 3:
+                         ability_target = "wizard"
+                         set_ability_message("Wizard: choose a tile to block.")
+
           if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 1 and state == "playing":
                mouseX = (event.pos[0] - Board_Offset_X) // Square_size
                mouseY = (event.pos[1] - Board_Offset_Y) // Square_size
+               if 0 <= mouseX < Board_cols and 0 <= mouseY < Board_Rows:
+
+                    if ability_target is not None:
+                         if ability_target == "knight":
+                              if board[mouseY][mouseX] == 1:
+                                   protected_cell = (mouseY, mouseX)
+                                   player_ability_used = True
+                                   ability_target = None
+                                   set_ability_message("Knight: piece protected for the turn.")
+                         elif ability_target == "thief_own":
+                              if board[mouseY][mouseX] == 1:
+                                   thief_own_cell = (mouseY, mouseX)
+                                   ability_target = "thief_target"
+                                   set_ability_message("Thief: choose an opponent tile to swap.")
+                         elif ability_target == "thief_target":
+                              if board[mouseY][mouseX] == 2 and thief_own_cell is not None:
+                                   o_r, o_c = thief_own_cell
+                                   board[o_r][o_c], board[mouseY][mouseX] = 2, 1
+                                   player_ability_used = True
+                                   ability_target = None
+                                   thief_own_cell = None
+                                   set_ability_message("Thief: tiles swapped.")
+                         elif ability_target == "wizard":
+                              if board[mouseY][mouseX] == 0:
+                                   blocked_cell = (mouseY, mouseX)
+                                   player_ability_used = True
+                                   ability_target = None
+                                   set_ability_message("Wizard: cell blocked for one turn.")
+                         continue
 
 
                if 0 <= mouseX < Board_cols and 0 <= mouseY < Board_Rows:
@@ -319,9 +493,11 @@ while True:
                          else:
                             board[mouseY][mouseX] = 0
                             place_piece(mouseY, mouseX, player) 
+                            player_turns += 1 
                             player = player % 2 + 1
                             if not game_over:
                                  if best_move():
+                                      ai_turns += 1 
                                       if check_win(2):
                                            game_over = True
                                            series_wins[2] += 1
@@ -339,8 +515,10 @@ while True:
           if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             restart_series()
      if state == "playing" and not game_over and not series_over and player == 2:
-
+          if ai_turns >= 2 and not ai_ability_used:
+               apply_ai_ability()
           if best_move():
+                ai_turns += 1  
                 if check_win(2):
                      game_over = True
                      series_wins[2] += 1
@@ -358,6 +536,7 @@ while True:
           if not game_over:
                draw_lines()
                draw_figures()
+               draw_ability_highlights()   
           else:
                if check_win(1):
                     draw_figures(Green)
@@ -368,7 +547,9 @@ while True:
                     draw_lines(Red)
                else: 
                     draw_figures(Gray)
-               draw_lines(Gray)
+                    draw_lines(Gray)
 
      draw_scores()
+     if state == "playing":
+          draw_ability_hud()
      pygame.display.update()
