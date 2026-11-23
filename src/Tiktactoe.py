@@ -56,7 +56,9 @@ ai_ability_used = False
 player_turns = 0
 ai_turns = 0
 protected_cell = None
+protected_turns_left = 0 
 blocked_cell = None
+blocked_turns_left = 0 
 blocked_by = None
 ability_target = None
 thief_own_cell = None
@@ -209,6 +211,8 @@ def best_move():
 
      if move != (-1, -1):
             place_piece(move[0], move[1], 2)
+            tick_ability_effects() 
+
             return True
      return False  
 
@@ -223,11 +227,26 @@ def human_ability_ready():
 def ai_ability_ready():
      return (not ai_ability_used) and (ai_turns >= 2) and ai_class != 4
 
+def tick_ability_effects():
+     global protected_cell, protected_turns_left
+     global blocked_cell, blocked_turns_left, blocked_by
+
+     if protected_cell is not None and protected_turns_left > 0:
+           protected_turns_left -= 1
+           if protected_turns_left == 0:
+                protected_cell = None
+     if blocked_cell is not None and blocked_turns_left > 0:
+          blocked_turns_left -= 1
+          if blocked_turns_left == 0:
+               blocked_cell = None
+               blocked_by = None
+
+
 def clear_expired_blocks():
      pass
 
 def apply_ai_ability():
-     global ai_ability_used, protected_cell, blocked_cell, blocked_by
+     global ai_ability_used, protected_cell, blocked_cell, blocked_by, protected_turns_left, blocked_turns_left
      if not ai_ability_ready():
           return
      if ai_class == 1:
@@ -235,6 +254,7 @@ def apply_ai_ability():
           for cell in Move_history:
                if board[cell[0]][cell[1]] == 2:
                     protected_cell = cell
+                    protected_turns_left = 2 
                     set_ability_message("AI Knight protected a piece!")
                     return
           protected_cell = None
@@ -254,6 +274,7 @@ def apply_ai_ability():
           if empties:
                blocked_cell = random.choice(empties)
                blocked_by = 2
+               blocked_turns_left = 2 
                set_ability_message("AI Wizard blocked a tile!")
 
 def restart_game():
@@ -261,6 +282,7 @@ def restart_game():
      global player_ability_used, ai_ability_used  
      global player_turns, ai_turns 
      global protected_cell, blocked_cell, blocked_by 
+     global protected_turns_left, blocked_turns_left     
      global protected_cell, blocked_cell 
      global ability_target, thief_own_cell 
      screen.fill(Black)
@@ -276,7 +298,9 @@ def restart_game():
      player_turns = 0
      ai_turns = 0
      protected_cell = None
+     protected_turns_left = 0   
      blocked_cell = None
+     blocked_turns_left = 0 
      blocked_by = None     
      ability_target = None
      thief_own_cell = None
@@ -285,12 +309,19 @@ def restart_game():
 
 def next_round():
       global Move_history, player, game_over, next_starter
+      global protected_cell, protected_turns_left
+      global blocked_cell, blocked_turns_left, blocked_by
       for row in range(Board_Rows):
            for col in range(Board_cols):
                 board[row][col] = 0
       Move_history = []
       player = next_starter
       game_over = False
+      protected_cell = None
+      protected_turns_left = 0
+      blocked_cell = None
+      blocked_turns_left = 0
+      blocked_by = None
 
 def restart_series():
      global series_wins, series_over, next_starter
@@ -458,6 +489,7 @@ while True:
                          if ability_target == "knight":
                               if board[mouseY][mouseX] == 1:
                                    protected_cell = (mouseY, mouseX)
+                                   protected_turns_left = 2 
                                    player_ability_used = True
                                    ability_target = None
                                    set_ability_message("Knight: piece protected for the turn.")
@@ -478,6 +510,7 @@ while True:
                               if board[mouseY][mouseX] == 0:
                                    blocked_cell = (mouseY, mouseX)
                                    blocked_by = 1
+                                   blocked_turns_left = 2
                                    
                                    player_ability_used = True
                                    ability_target = None
@@ -487,9 +520,9 @@ while True:
 
                if 0 <= mouseX < Board_cols and 0 <= mouseY < Board_Rows:
                     if avaliable_square(mouseY, mouseX):
-                         if blocked_by == 2: 
-                              blocked_cell = None
-                              blocked_by = None
+                         #if blocked_by == 2: 
+                              #blocked_cell = None
+                              #blocked_by = None
                          board[mouseY][mouseX] = player
                          if check_win(player):
                               game_over = True
@@ -502,6 +535,7 @@ while True:
                          else:
                             board[mouseY][mouseX] = 0
                             place_piece(mouseY, mouseX, player) 
+                            tick_ability_effects()
                             player_turns += 1 
                             player = player % 2 + 1
                             if not game_over:
@@ -529,9 +563,9 @@ while True:
      if state == "playing" and not game_over and not series_over and player == 2:
           if ai_turns >= 2 and not ai_ability_used:
                apply_ai_ability()
-          if blocked_by == 1:
-               blocked_cell = None
-               blocked_by = None
+          #if blocked_by == 1:
+               #blocked_cell = None
+               #blocked_by = None
           if best_move():
                 ai_turns += 1  
                 if check_win(2):
