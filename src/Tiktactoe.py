@@ -17,9 +17,6 @@ screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 Width, Height = screen.get_size() 
 pygame.display.set_caption('Tic Tac Toe AI')
 
-
-#Width = 300
-#Height = 300
 Board_Rows = 3
 Board_cols = 3
 Board_Size = min(Width, Height) - 40 
@@ -60,6 +57,7 @@ player_turns = 0
 ai_turns = 0
 protected_cell = None
 blocked_cell = None
+blocked_by = None
 ability_target = None
 thief_own_cell = None
 ability_message = ""
@@ -114,6 +112,7 @@ def mark_square(row, col, player):
     board[row][col] = player
 
 def place_piece(row, col, player):
+     global protected_cell 
      mark_square(row, col, player)
      Move_history.append((row, col))
      if len(Move_history) > Max_Pieces:
@@ -228,7 +227,7 @@ def clear_expired_blocks():
      pass
 
 def apply_ai_ability():
-     global ai_ability_used, protected_cell, blocked_cell
+     global ai_ability_used, protected_cell, blocked_cell, blocked_by
      if not ai_ability_ready():
           return
      if ai_class == 1:
@@ -254,10 +253,16 @@ def apply_ai_ability():
           empties = [(r, c) for r in range(Board_Rows) for c in range(Board_cols) if board[r][c] == 0]
           if empties:
                blocked_cell = random.choice(empties)
+               blocked_by = 2
                set_ability_message("AI Wizard blocked a tile!")
 
 def restart_game():
-     global Move_history
+     global Move_history, player, game_over, next_starter
+     global player_ability_used, ai_ability_used  
+     global player_turns, ai_turns 
+     global protected_cell, blocked_cell, blocked_by 
+     global protected_cell, blocked_cell 
+     global ability_target, thief_own_cell 
      screen.fill(Black)
      draw_lines()
      for row in range(Board_Rows):
@@ -272,6 +277,7 @@ def restart_game():
      ai_turns = 0
      protected_cell = None
      blocked_cell = None
+     blocked_by = None     
      ability_target = None
      thief_own_cell = None
 
@@ -284,7 +290,6 @@ def next_round():
                 board[row][col] = 0
       Move_history = []
       player = next_starter
-      #player = 1
       game_over = False
 
 def restart_series():
@@ -295,7 +300,6 @@ def restart_series():
      next_round()
 
 def draw_scores():
-      #font = pygame.font.SysFont(None, max(28, Square_size // 3))
       text = f"YOU (O): {series_wins[1]}    AI (X): {series_wins[2]}    First to {Wins_To_Take_Series}"
       text += f"    YOU: {CLASS_NAMES[player_class]}  vs  AI: {CLASS_NAMES[ai_class]}"
       font_size = max(28, Square_size // 3)
@@ -473,6 +477,8 @@ while True:
                          elif ability_target == "wizard":
                               if board[mouseY][mouseX] == 0:
                                    blocked_cell = (mouseY, mouseX)
+                                   blocked_by = 1
+                                   
                                    player_ability_used = True
                                    ability_target = None
                                    set_ability_message("Wizard: cell blocked for one turn.")
@@ -481,6 +487,9 @@ while True:
 
                if 0 <= mouseX < Board_cols and 0 <= mouseY < Board_Rows:
                     if avaliable_square(mouseY, mouseX):
+                         if blocked_by == 2: 
+                              blocked_cell = None
+                              blocked_by = None
                          board[mouseY][mouseX] = player
                          if check_win(player):
                               game_over = True
@@ -496,6 +505,9 @@ while True:
                             player_turns += 1 
                             player = player % 2 + 1
                             if not game_over:
+                                 if ai_turns >= 2 and not ai_ability_used:
+                                      apply_ai_ability()
+
                                  if best_move():
                                       ai_turns += 1 
                                       if check_win(2):
@@ -517,6 +529,9 @@ while True:
      if state == "playing" and not game_over and not series_over and player == 2:
           if ai_turns >= 2 and not ai_ability_used:
                apply_ai_ability()
+          if blocked_by == 1:
+               blocked_cell = None
+               blocked_by = None
           if best_move():
                 ai_turns += 1  
                 if check_win(2):
