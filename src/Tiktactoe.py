@@ -469,7 +469,7 @@ while True:
                if event.key in (pygame.K_3, pygame.K_KP3): player_class = 3
                if event.key in (pygame.K_4, pygame.K_KP4): player_class = 4
                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    ai_class = random.randint(1, 4)
+                    ai_class = random.choice([c for c in(1, 2, 3, 4) if c != player_class])
                     restart_series()
                     state = "playing"
 
