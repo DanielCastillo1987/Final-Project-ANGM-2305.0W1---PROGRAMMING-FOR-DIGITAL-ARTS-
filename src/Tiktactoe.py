@@ -4,7 +4,7 @@ import pygame
 import numpy as np
 import random   
 
-pygame.mixer.pre_init(44100, -16, 2, 512)     
+pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 
 White = (255, 255, 255)
@@ -233,8 +233,8 @@ def set_ability_message(msg):
      ability_message_timer = 120
 
 def human_ability_ready():
-     return (not player_ability_used) and (player_turns >= 2) and player_class != 4
-
+     return (not player_ability_used) and (player_turns >= 1) and player_class != 4
+     
 def ai_ability_ready():
      return (not ai_ability_used) and (ai_turns >= 2) and ai_class != 4
 
@@ -364,11 +364,11 @@ def draw_scores():
 
       if series_over:
            if series_wins[1] >= Wins_To_Take_Series:
-                msg = "You won the set!  Press R to play again"
+                msg = "You won the set!  Press R to play again or Esc to leave"
            else:
-                msg = "You lost the set!  Press R to play again" 
+                msg = "You lost the set!  Press R to play again or Esc to leave" 
 
-           font_size2 = max(32, Square_size // 2)
+           font_size2 = max(32, Square_size // 4)
 
            font2 = pygame.font.SysFont(None, font_size2)
            surface2 = font2.render(msg, True, White)
@@ -383,7 +383,7 @@ def draw_scores():
 def draw_menu():
       title_size = max(48, Square_size // 2)
       font = pygame.font.SysFont(None, title_size)
-      title = font.render("TIC TAC TOE", True, White)
+      title = font.render("Shifting Tic Tac Toe", True, White)
       screen.blit(title, title.get_rect(center=(Width // 2, Height // 2 - Square_size // 2)))
       prompt_size = max(28, Square_size // 4)
       font2 = pygame.font.SysFont(None, prompt_size)
@@ -414,12 +414,12 @@ def draw_class_select():
      desc_size = max(24, Square_size // 6) 
      font3 = pygame.font.SysFont(None, desc_size)
      desc = CLASS_DESCRIPTIONS[player_class]
-     desc_surface = font3.render(desc, True, Gray)
+     desc_surface = font3.render(desc, True, Blue)
      while desc_surface.get_width() > Width * 0.9 and desc_size > 14:
           desc_size -= 2
           font3 = pygame.font.SysFont(None, desc_size)
-          desc_surface = font3.render(desc, True, Gray)
-     screen.blit(desc_surface, desc_surface.get_rect(center=(Width // 2, Height - desc_size * 3.5 - 10))) 
+          desc_surface = font3.render(desc, True, Blue)
+     screen.blit(desc_surface, desc_surface.get_rect(center=(Width // 2, Height // 2 - Square_size + desc_size * 3))) 
 
 
 def draw_ability_hud():
@@ -434,7 +434,7 @@ def draw_ability_hud():
      elif player_ability_used:
           text = "Ability used."
           color = Gray
-     elif player_turns >= 2 and player == 1 and state == "playing":
+     elif player_turns >= 1 and player == 1 and state == "playing":
           text = "Press E to use your ability."
           color = Green
      elif ability_target in ("thief_own", "thief_target"):
