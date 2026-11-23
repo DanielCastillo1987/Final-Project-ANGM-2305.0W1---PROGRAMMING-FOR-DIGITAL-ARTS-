@@ -121,7 +121,6 @@ def place_piece(row, col, player):
         old_row, old_col = Move_history.pop(0)
         if protected_cell == (old_row, old_col):
               protected_cell = None
-              Move_history.insert(0, (old_row, old_col))
         else:
            board[old_row][old_col] = 0
 
