@@ -258,10 +258,10 @@ def apply_ai_ability():
                     return
           protected_cell = None
      elif ai_class == 2:
-          ai_ability_used = True
           ai_cells = [(r, c) for r in range(Board_Rows) for c in range(Board_cols) if board[r][c] == 2]
           human_cells = [(r, c) for r in range(Board_Rows) for c in range(Board_cols) if board[r][c] == 1]
           if ai_cells and human_cells:
+               ai_ability_used = True
                a = random.choice(ai_cells)
                h = random.choice(human_cells)
                board[a[0]][a[1]] = 1
@@ -447,6 +447,11 @@ player = next_starter
 game_over = False
 
 while True:
+     if ability_message_timer > 0:
+          ability_message_timer -= 1 
+          if ability_message_timer == 0:
+                ability_message = ""
+
      screen.fill(Black)
      for event in pygame.event.get():
           if event.type == pygame.QUIT:
@@ -474,16 +479,24 @@ while True:
                     state = "playing"
 
           if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-               if state == "playing" and not game_over and player == 1 and human_ability_ready():
-                    if player_class == 1:
-                         ability_target = "knight"
-                         set_ability_message("Knight: choose a tile to protect.")
-                    elif player_class == 2:
-                         ability_target = "thief_own"
-                         set_ability_message("Thief: choose your own tile.")
-                    elif player_class == 3:
-                         ability_target = "wizard"
-                         set_ability_message("Wizard: choose a tile to block.")
+               if state == "playing" and not game_over and player == 1:
+                    if ability_target is not None:
+                         ability_target = None
+                         thief_own_cell = None
+                         set_ability_message("Ability canceled.")
+                    elif human_ability_ready():
+                         if player_class == 1:
+                              ability_target = "knight"
+                              set_ability_message("Knight: choose a tile to protect.")
+                         elif player_class == 2:
+                              if any(board[r][c] == 2 for r in range(Board_Rows) for c in range(Board_cols)):
+                                   ability_target = "thief_own"
+                                   set_ability_message("Thief: choose your own tile.")
+                              else:
+                                   set_ability_message("Thief: no opponent tile to swap yet.")
+                         elif player_class == 3:
+                              ability_target = "wizard"
+                              set_ability_message("Wizard: choose a tile to block.")
 
           if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 1 and state == "playing":
                mouseX = (event.pos[0] - Board_Offset_X) // Square_size
@@ -575,6 +588,8 @@ while True:
                           series_over = True
                 else:
                      player = 1
+          else:
+                player = 1 
      if state == "menu":
           draw_menu()
      elif state == "class_select":
