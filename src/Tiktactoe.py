@@ -630,7 +630,8 @@ while True:
                     draw_figures(Gray)
                     draw_lines(Gray)
 
-     draw_scores()
      if state == "playing":
+
+          draw_scores()
           draw_ability_hud()
      pygame.display.update()
