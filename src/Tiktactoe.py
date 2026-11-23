@@ -1,8 +1,10 @@
 import sys
+import os 
 import pygame
 import numpy as np
 import random   
 
+pygame.mixer.pre_init(44100, -16, 2, 512)     
 pygame.init()
 
 White = (255, 255, 255)
@@ -16,6 +18,16 @@ Blue = (0, 120, 255)
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 Width, Height = screen.get_size() 
 pygame.display.set_caption('Tic Tac Toe AI')
+
+try: 
+     MUSIC_PATH = os.path.join(os.path.dirname(__file__), "music.wav")
+     pygame.mixer.music.load(MUSIC_PATH)  
+     pygame.mixer.music.set_volume(0.4)
+     pygame.mixer.music.play(-1)
+     print("Music loaded from:", MUSIC_PATH)
+     
+except pygame.error as e:
+      print("Music failed to load:", e)
 
 Board_Rows = 3
 Board_cols = 3
@@ -384,7 +396,7 @@ def draw_menu():
 def draw_class_select():
      title_size = max(40, Square_size // 3)
      font = pygame.font.SysFont(None, title_size)
-     title = font.render("CHOOSE YOUR CLASS", True, White)
+     title = font.render("CHOOSE YOUR CLASS E To Use Ability", True, White)
      screen.blit(title, title.get_rect(center=(Width // 2, Height // 2 - Square_size)))
 
      option_size = max(28, Square_size // 5)
@@ -461,6 +473,12 @@ while True:
                sys.exit()
           if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
                 pygame.display.toggle_fullscreen()
+
+          if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+                if pygame.mixer.music.get_volume() > 0:
+                      pygame.mixer.music.set_volume(0)
+                else:
+                     pygame.mixer.music.set_volume(0.4)
 
           if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if state == "menu":
