@@ -311,6 +311,8 @@ def next_round():
       global Move_history, player, game_over, next_starter
       global protected_cell, protected_turns_left
       global blocked_cell, blocked_turns_left, blocked_by
+      global player_ability_used, ai_ability_used
+      global player_turns, ai_turns    
       for row in range(Board_Rows):
            for col in range(Board_cols):
                 board[row][col] = 0
@@ -322,6 +324,10 @@ def next_round():
       blocked_cell = None
       blocked_turns_left = 0
       blocked_by = None
+      player_ability_used = False
+      ai_ability_used = False
+      player_turns = 0
+      ai_turns = 0
 
 def restart_series():
      global series_wins, series_over, next_starter
@@ -520,9 +526,6 @@ while True:
 
                if 0 <= mouseX < Board_cols and 0 <= mouseY < Board_Rows:
                     if avaliable_square(mouseY, mouseX):
-                         #if blocked_by == 2: 
-                              #blocked_cell = None
-                              #blocked_by = None
                          board[mouseY][mouseX] = player
                          if check_win(player):
                               game_over = True
@@ -563,9 +566,6 @@ while True:
      if state == "playing" and not game_over and not series_over and player == 2:
           if ai_turns >= 2 and not ai_ability_used:
                apply_ai_ability()
-          #if blocked_by == 1:
-               #blocked_cell = None
-               #blocked_by = None
           if best_move():
                 ai_turns += 1  
                 if check_win(2):
