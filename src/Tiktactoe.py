@@ -408,7 +408,7 @@ def draw_menu():
 def draw_class_select():
      title_size = max(40, Square_size // 3)
      font = pygame.font.SysFont(None, title_size)
-     title = font.render("Choose Your Class 'E' To Use Ability", True, White)
+     title = font.render("Choose Your Class 'E' To Use Ability.", True, White)
      screen.blit(title, title.get_rect(center=(Width // 2, Height // 2 - Square_size)))
 
      option_size = max(28, Square_size // 5)
@@ -526,7 +526,7 @@ while True:
                                    set_ability_message("Thief: no opponent tile to swap yet.")
                          elif player_class == 3:
                               ability_target = "wizard"
-                              set_ability_message("Wizard: choose a tile to block.")
+                              set_ability_message("Wizard: Choose a tile to block.")
 
           if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 1 and state == "playing":
                mouseX = (event.pos[0] - Board_Offset_X) // Square_size
