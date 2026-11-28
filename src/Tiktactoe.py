@@ -57,7 +57,7 @@ state = "menu"
 player_class = 1
 ai_class = 1
 CLASS_NAMES = {1: "Knight", 2: "Thief", 3: "Wizard", 4: "John Tiktactoe"}
-CLASS_DESCRIPTIONS = {1: "Knight: You can protect a move meant to disappear for one turn.'Your Stars Were Bad'", 
+CLASS_DESCRIPTIONS = {1: "Knight: You can protect a move meant to disappear for one turn.'Your Stars Were Bad.'", 
                       2: "Thief: Swaps one of your tiles with your opponent. 'Take Your Heart.'",
                       3: "Wizard: Makes a tile unplayable for the turn. 'We Love Casting Spells.'",
                       4: "John Tiktactoe: No power just skill. 'Gimme A Cheese With Nothing.'", 
@@ -362,11 +362,23 @@ def draw_scores():
       rect = surface.get_rect(center=(Width // 2, Board_Offset_Y // 2 + 70))
       screen.blit(surface, rect)
 
+      if game_over and not series_over: 
+           prompt2 = "Press SPACE for next game."
+           prompt_size2 = max(28, Square_size // 6)
+           fontp = pygame.font.SysFont(None, prompt_size2)
+           prompt_surf = fontp.render(prompt2, True, Blue)
+           while prompt_surf.get_width() > Width * 0.9 and prompt_size2 > 16:
+                prompt_size2 -= 2
+                fontp = pygame.font.SysFont(None, prompt_size2)
+                prompt_surf = fontp.render(prompt2, True, Blue)
+           prompt_rect = prompt_surf.get_rect(center=(Width // 2, Height - Board_Offset_Y // 2 - 60))
+           screen.blit(prompt_surf, prompt_rect)
+
       if series_over:
            if series_wins[1] >= Wins_To_Take_Series:
-                msg = "You won the set!  Press R to play again or Esc to leave"
+                msg = "You won the set!  Press R to play again or Esc to quit"
            else:
-                msg = "You lost the set!  Press R to play again or Esc to leave" 
+                msg = "You lost the set!  Press R to play again or Esc to quit" 
 
            font_size2 = max(32, Square_size // 4)
 
@@ -396,7 +408,7 @@ def draw_menu():
 def draw_class_select():
      title_size = max(40, Square_size // 3)
      font = pygame.font.SysFont(None, title_size)
-     title = font.render("CHOOSE YOUR CLASS E To Use Ability", True, White)
+     title = font.render("Choose Your Class 'E' To Use Ability", True, White)
      screen.blit(title, title.get_rect(center=(Width // 2, Height // 2 - Square_size)))
 
      option_size = max(28, Square_size // 5)
@@ -408,7 +420,7 @@ def draw_class_select():
           color = Green if (i + 1) == player_class else White
           surface = font2.render(label, True, color)
           screen.blit(surface, surface.get_rect(center=(Width // 2, start_y + i * (option_size + 16))))
-     hint = font2.render("Press 1-4 to choose, ENTER to confirm", True, Gray)
+     hint = font2.render("Press 1-4 to choose, ENTER to play.", True, Gray)
      screen.blit(hint, hint.get_rect(center=(Width // 2, Height - option_size * 2)))
 
      desc_size = max(24, Square_size // 6) 
